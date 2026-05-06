@@ -1,21 +1,219 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>SIGI - Consultas</title>
-    <style>
-        body { font-family: sans-serif; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; }
-        .card { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.2); }
-        a { color: #ffab40; text-decoration: none; font-weight: bold; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIGI – Consultas</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#0d1b6e,#1a237e,#283593); min-height: 100vh; color: #fff; padding: 24px; }
+    a.back { display: inline-flex; align-items: center; gap: 6px; color: #a5d6a7; border: 1px solid #a5d6a7; padding: 7px 14px; border-radius: 8px; text-decoration: none; font-size: .85rem; margin-bottom: 20px; transition: background .2s; }
+    a.back:hover { background: rgba(165,214,167,.15); }
+    h1 { font-size: 1.5rem; margin-bottom: 20px; }
+    .panel { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 22px; margin-bottom: 24px; }
+    .panel h2 { font-size: 1rem; margin-bottom: 16px; color: #90caf9; }
+    .search-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+    .form-group { flex: 1; min-width: 180px; }
+    label { display: block; font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.75); margin-bottom: 4px; }
+    input, select { width: 100%; padding: 9px 12px; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2); border-radius: 8px; color: #fff; font-size: .9rem; outline: none; transition: border-color .2s; }
+    input::placeholder { color: rgba(255,255,255,.4); }
+    input:focus, select:focus { border-color: #90caf9; background: rgba(255,255,255,.15); }
+    select option { background: #1a237e; }
+    .field-error { display: none; color: #ff8a80; font-size: .75rem; margin-top: 3px; }
+    .btn { padding: 9px 22px; border: none; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .2s, transform .1s; white-space: nowrap; }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: linear-gradient(135deg,#1565c0,#3949ab); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,.35); color: #fff; }
+    .btn-outline:hover { background: rgba(255,255,255,.1); }
+    .alert { display: none; padding: 9px 13px; border-radius: 8px; font-size: .82rem; margin-bottom: 14px; font-weight: 500; }
+    .alert.error   { background: rgba(229,57,53,.2); border: 1px solid #ef9a9a; color: #ffcdd2; }
+    .alert.success { background: rgba(46,125,50,.2); border: 1px solid #a5d6a7; color: #c8e6c9; }
+    table { width: 100%; border-collapse: collapse; background: #fff; color: #222; border-radius: 10px; overflow: hidden; font-size: .87rem; }
+    thead th { background: #3949ab; color: #fff; padding: 11px 12px; text-align: left; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid #e0e0e0; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f5f5f5; }
+    .badge-entrada { background: #e8f5e9; color: #2e7d32; border-radius: 12px; padding: 2px 10px; font-size: .78rem; font-weight: 700; }
+    .badge-salida  { background: #ffebee; color: #c62828; border-radius: 12px; padding: 2px 10px; font-size: .78rem; font-weight: 700; }
+    .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+    .badge-rol { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 4px 12px; font-size: .75rem; }
+    .btn-sm { padding: 5px 12px; font-size: .78rem; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); color: #fff; border-radius: 6px; cursor: pointer; }
+    .btn-sm:hover { background: rgba(255,255,255,.18); }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 5px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .results-info { font-size: .8rem; color: rgba(255,255,255,.6); margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-    <div class="card">
-        <h1>🔍 Módulo de Consultas</h1>
-        <p>Reportes de movimientos y análisis de stock mínimo.</p>
-        <br>
-        <a href="/dashboard">← Regresar al Panel</a>
+
+<div class="header-row">
+  <a href="/dashboard" class="back">← Volver al Panel</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="badge-rol" id="badgeUsuario">Cargando...</span>
+    <button class="btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
+</div>
+
+<h1>🔍 Módulo de Consultas</h1>
+
+<!-- Filtros -->
+<div class="panel">
+  <h2>Filtrar movimientos</h2>
+  <div class="alert" id="alertaBusqueda"></div>
+  <form id="formBusqueda" novalidate>
+    <div class="search-row">
+      <div class="form-group">
+        <label>Buscar por SKU</label>
+        <input type="text" id="filtrSku" maxlength="20" placeholder="Ej: SKU-001" />
+        <div class="field-error" id="err-sku">El SKU no puede contener caracteres especiales.</div>
+      </div>
+      <div class="form-group">
+        <label>Buscar por Categoría</label>
+        <input type="text" id="filtrCat" maxlength="40" placeholder="Ej: Electrónica" />
+        <div class="field-error" id="err-cat">La categoría no puede contener caracteres especiales.</div>
+      </div>
+      <div style="display:flex;gap:8px;padding-bottom:0;">
+        <button type="submit" class="btn btn-primary" id="btnBuscar">Buscar</button>
+        <button type="button" class="btn btn-outline" onclick="limpiarFiltros()">Limpiar</button>
+      </div>
     </div>
+  </form>
+</div>
+
+<!-- Resultados -->
+<div class="panel">
+  <h2>📋 Historial de movimientos</h2>
+  <p class="results-info" id="resultadosInfo">Mostrando todos los movimientos.</p>
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>SKU</th>
+        <th>Producto</th>
+        <th>Categoría</th>
+        <th>Tipo</th>
+        <th>Cantidad</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody id="tablaMovimientos">
+      <tr><td colspan="7" style="text-align:center;padding:20px;color:#888">Cargando...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const PELIGROSO = /[<>"';%()&+\\]/;
+
+  function mostrarAlerta(id, tipo, msg) {
+    const el = document.getElementById(id);
+    el.className = `alert ${tipo}`;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  function mostrarError(id, mostrar) {
+    document.getElementById(id).style.display = mostrar ? 'block' : 'none';
+  }
+
+  // Verificar sesión activa
+  fetch('/api/sesion')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) { window.location.href = '/'; return; }
+      document.getElementById('badgeUsuario').textContent = `${d.usuario.nombre} (${d.usuario.rol})`;
+    })
+    .catch(() => window.location.href = '/');
+
+  function cerrarSesion() {
+    fetch('/api/logout', { method: 'POST' })
+      .then(() => window.location.href = '/');
+  }
+
+  function renderTabla(data, descripcion) {
+    const tbody = document.getElementById('tablaMovimientos');
+    const info  = document.getElementById('resultadosInfo');
+    info.textContent = descripcion || `Mostrando ${data.length} resultado(s).`;
+    tbody.innerHTML  = '';
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888">Sin resultados.</td></tr>';
+      return;
+    }
+    data.forEach((m, i) => {
+      const badge  = m.tipo === 'entrada'
+        ? '<span class="badge-entrada">Entrada</span>'
+        : '<span class="badge-salida">Salida</span>';
+      const fecha  = new Date(m.fecha).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' });
+      tbody.innerHTML += `<tr>
+        <td>${i + 1}</td>
+        <td>${m.sku}</td>
+        <td>${m.nombre}</td>
+        <td>${m.categoria}</td>
+        <td>${badge}</td>
+        <td>${m.cantidad}</td>
+        <td>${fecha}</td>
+      </tr>`;
+    });
+  }
+
+  function cargarMovimientos(params = '') {
+    fetch('/api/movimientos' + params)
+      .then(r => {
+        if (r.status === 401) { window.location.href = '/'; return null; }
+        return r.json();
+      })
+      .then(data => {
+        if (!data) return;
+        if (Array.isArray(data)) {
+          renderTabla(data, params ? undefined : 'Mostrando todos los movimientos.');
+        } else {
+          mostrarAlerta('alertaBusqueda', 'error', data.mensaje || 'Error en el sistema.');
+        }
+      })
+      .catch(() => mostrarAlerta('alertaBusqueda', 'error', 'Error de conexión.'));
+  }
+
+  cargarMovimientos();
+
+  // ── Validación y envío del formulario de búsqueda ──────────────────────────
+  document.getElementById('formBusqueda').addEventListener('submit', (e) => {
+    e.preventDefault();
+    let valido = true;
+
+    const sku = document.getElementById('filtrSku').value.trim();
+    const cat = document.getElementById('filtrCat').value.trim();
+
+    if (sku && PELIGROSO.test(sku)) { mostrarError('err-sku', true); valido = false; } else mostrarError('err-sku', false);
+    if (cat && PELIGROSO.test(cat)) { mostrarError('err-cat', true); valido = false; } else mostrarError('err-cat', false);
+
+    if (!sku && !cat) {
+      mostrarAlerta('alertaBusqueda', 'error', 'Ingresa al menos un criterio de búsqueda (SKU o Categoría).');
+      return;
+    }
+    if (!valido) return;
+
+    const btn = document.getElementById('btnBuscar');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Buscando...';
+
+    const params = sku
+      ? `?sku=${encodeURIComponent(sku)}`
+      : `?categoria=${encodeURIComponent(cat)}`;
+
+    cargarMovimientos(params);
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Buscar'; }, 600);
+  });
+
+  function limpiarFiltros() {
+    document.getElementById('filtrSku').value = '';
+    document.getElementById('filtrCat').value = '';
+    mostrarError('err-sku', false);
+    mostrarError('err-cat', false);
+    cargarMovimientos();
+  }
+</script>
+
 </body>
 </html>
-

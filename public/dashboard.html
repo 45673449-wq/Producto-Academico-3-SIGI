@@ -146,11 +146,10 @@
 
     <div class="status">
       <span class="status-dot"></span>
-      Conectado como Administrador
+      Bienvenido, <strong id="nombreUsuario" style="margin-left:4px">...</strong>
     </div>
 
     <div class="cards">
-      <!-- BOTÓN GESTIÓN DE DATOS -->
       <a href="/gestion" class="card-link">
         <div class="card">
           <div class="icon">📊</div>
@@ -159,7 +158,6 @@
         </div>
       </a>
 
-      <!-- BOTÓN CONSULTAS -->
       <a href="/consultas" class="card-link">
         <div class="card">
           <div class="icon">🔍</div>
@@ -168,15 +166,32 @@
         </div>
       </a>
 
-      <!-- BOTÓN CONFIGURACIÓN -->
-      <div class="card">
+      <div class="card" style="cursor:default;">
         <div class="icon">⚙️</div>
         <h3>Configuración</h3>
         <p>Ajustes de perfil y sistema</p>
       </div>
     </div>
 
-    <p class="footer">SIGI &mdash; Producto Académico 2 &copy; 2024</p>
+    <button onclick="cerrarSesion()" style="background:rgba(229,57,53,.15);border:1px solid rgba(229,57,53,.4);color:#ef9a9a;padding:9px 24px;border-radius:8px;font-size:.85rem;cursor:pointer;margin-bottom:20px;">
+      Cerrar sesión
+    </button>
+
+    <p class="footer">SIGI &mdash; Producto Académico 2 &copy; 2026</p>
   </div>
 </body>
+<script>
+  fetch('/api/sesion')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) { window.location.href = '/'; return; }
+      document.getElementById('nombreUsuario').textContent = `${d.usuario.nombre} (${d.usuario.rol})`;
+    })
+    .catch(() => window.location.href = '/');
+
+  function cerrarSesion() {
+    fetch('/api/logout', { method: 'POST' })
+      .then(() => window.location.href = '/');
+  }
+</script>
 </html>

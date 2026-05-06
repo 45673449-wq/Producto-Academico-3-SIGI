@@ -1,49 +1,294 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>SIGI - Inventario</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a237e; color: white; padding: 20px; }
-        .container { background: rgba(255,255,255,0.1); padding: 30px; border-radius: 15px; backdrop-filter: blur(10px); }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; color: #333; }
-        th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-        th { background: #3949ab; color: white; }
-        .back-btn { color: #a5d6a7; text-decoration: none; border: 1px solid #a5d6a7; padding: 8px 15px; border-radius: 5px; display: inline-block; margin-bottom: 20px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SIGI – Gestión de Inventario</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg,#0d1b6e,#1a237e,#283593); min-height: 100vh; color: #fff; padding: 24px; }
+    a.back { display: inline-flex; align-items: center; gap: 6px; color: #a5d6a7; border: 1px solid #a5d6a7; padding: 7px 14px; border-radius: 8px; text-decoration: none; font-size: .85rem; margin-bottom: 20px; transition: background .2s; }
+    a.back:hover { background: rgba(165,214,167,.15); }
+    h1 { font-size: 1.5rem; margin-bottom: 20px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+    @media(max-width:700px){ .grid { grid-template-columns: 1fr; } }
+    .panel { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 22px; }
+    .panel h2 { font-size: 1rem; margin-bottom: 16px; color: #90caf9; }
+    .form-group { margin-bottom: 13px; }
+    label { display: block; font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.75); margin-bottom: 4px; letter-spacing: .3px; }
+    input, select { width: 100%; padding: 9px 12px; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2); border-radius: 8px; color: #fff; font-size: .9rem; outline: none; transition: border-color .2s; }
+    input::placeholder { color: rgba(255,255,255,.4); }
+    input:focus, select:focus { border-color: #90caf9; background: rgba(255,255,255,.15); }
+    select option { background: #1a237e; color: #fff; }
+    .field-error { display: none; color: #ff8a80; font-size: .75rem; margin-top: 3px; }
+    .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: opacity .2s, transform .1s; margin-top: 4px; }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg,#1565c0,#3949ab); color: #fff; }
+    .btn-success { background: linear-gradient(135deg,#2e7d32,#43a047); color: #fff; }
+    .alert { display: none; padding: 9px 13px; border-radius: 8px; font-size: .82rem; margin-bottom: 10px; font-weight: 500; }
+    .alert.error   { background: rgba(229,57,53,.2); border: 1px solid #ef9a9a; color: #ffcdd2; }
+    .alert.success { background: rgba(46,125,50,.2); border: 1px solid #a5d6a7; color: #c8e6c9; }
+    table { width: 100%; border-collapse: collapse; background: #fff; color: #222; border-radius: 10px; overflow: hidden; font-size: .88rem; }
+    thead th { background: #3949ab; color: #fff; padding: 11px 12px; text-align: left; }
+    tbody td { padding: 10px 12px; border-bottom: 1px solid #e0e0e0; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: #f5f5f5; }
+    .stock-ok  { color: #2e7d32; font-weight: 700; }
+    .stock-low { color: #c62828; font-weight: 700; }
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: middle; margin-right: 5px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+    .badge-rol { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 4px 12px; font-size: .75rem; }
+    .btn-sm { padding: 5px 12px; font-size: .78rem; border: 1px solid rgba(255,255,255,.3); background: rgba(255,255,255,.08); color: #fff; border-radius: 6px; cursor: pointer; transition: background .2s; }
+    .btn-sm:hover { background: rgba(255,255,255,.18); }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <a href="/dashboard" class="back-btn">← Volver al Panel</a>
-        <h1>Gestión de Inventario (Kardex)</h1>
-        <table>
-            <thead>
-                <tr>
-                    <th>SKU</th>
-                    <th>Producto</th>
-                    <th>Categoría</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                </tr>
-            </thead>
-            <tbody id="tablaBody"></tbody>
-        </table>
-    </div>
-    <script>
-        fetch('/api/productos')
-            .then(res => res.json())
-            .then(data => {
-                const body = document.getElementById('tablaBody');
-                data.forEach(p => {
-                    body.innerHTML += `<tr>
-                        <td>${p.sku}</td>
-                        <td>${p.nombre}</td>
-                        <td>${p.categoria}</td>
-                        <td>S/ ${p.precio}</td>
-                        <td style="font-weight:bold; color:${p.stock < 5 ? 'red':'green'}">${p.stock}</td>
-                    </tr>`;
-                });
-            });
-    </script>
+
+<div class="header-row">
+  <a href="/dashboard" class="back">← Volver al Panel</a>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <span class="badge-rol" id="badgeUsuario">Cargando...</span>
+    <button class="btn-sm" onclick="cerrarSesion()">Cerrar sesión</button>
+  </div>
+</div>
+
+<h1>Gestión de Inventario (Kardex)</h1>
+
+<div class="grid">
+
+  <!-- Formulario: Nuevo Producto -->
+  <div class="panel">
+    <h2>➕ Registrar Producto</h2>
+    <div class="alert" id="alertaProd"></div>
+    <form id="formProducto" novalidate>
+      <div class="form-group">
+        <label>SKU *</label>
+        <input type="text" id="sku" maxlength="20" placeholder="Ej: SKU-004" />
+        <div class="field-error" id="err-sku">Ingresa un SKU válido (sin caracteres especiales).</div>
+      </div>
+      <div class="form-group">
+        <label>Nombre del producto *</label>
+        <input type="text" id="prod-nombre" maxlength="80" placeholder="Ej: Monitor 24 pulgadas" />
+        <div class="field-error" id="err-nombre">El nombre es obligatorio y no puede contener &lt; &gt; " ' ; %</div>
+      </div>
+      <div class="form-group">
+        <label>Categoría *</label>
+        <input type="text" id="prod-categoria" maxlength="40" placeholder="Ej: Electrónica" />
+        <div class="field-error" id="err-categoria">La categoría es obligatoria.</div>
+      </div>
+      <div class="form-group">
+        <label>Precio (S/) *</label>
+        <input type="number" id="prod-precio" min="0" step="0.01" placeholder="0.00" />
+        <div class="field-error" id="err-precio">Ingresa un precio numérico positivo.</div>
+      </div>
+      <div class="form-group">
+        <label>Stock inicial *</label>
+        <input type="number" id="prod-stock" min="0" step="1" placeholder="0" />
+        <div class="field-error" id="err-stock">El stock debe ser un entero positivo (sin letras).</div>
+      </div>
+      <button type="submit" class="btn btn-primary" id="btnProd">Registrar producto</button>
+    </form>
+  </div>
+
+  <!-- Formulario: Movimiento -->
+  <div class="panel">
+    <h2>📦 Registrar Movimiento</h2>
+    <div class="alert" id="alertaMov"></div>
+    <form id="formMov" novalidate>
+      <div class="form-group">
+        <label>Producto *</label>
+        <select id="mov-producto">
+          <option value="">— Selecciona un producto —</option>
+        </select>
+        <div class="field-error" id="err-mov-prod">Selecciona un producto.</div>
+      </div>
+      <div class="form-group">
+        <label>Tipo de movimiento *</label>
+        <select id="mov-tipo">
+          <option value="">— Selecciona tipo —</option>
+          <option value="entrada">Entrada</option>
+          <option value="salida">Salida</option>
+        </select>
+        <div class="field-error" id="err-mov-tipo">Selecciona entrada o salida.</div>
+      </div>
+      <div class="form-group">
+        <label>Cantidad *</label>
+        <input type="number" id="mov-cantidad" min="1" step="1" placeholder="Ej: 5" />
+        <div class="field-error" id="err-mov-cant">La cantidad debe ser un número entero mayor a 0.</div>
+      </div>
+      <button type="submit" class="btn btn-success" id="btnMov">Registrar movimiento</button>
+    </form>
+  </div>
+
+</div>
+
+<!-- Tabla de productos -->
+<div class="panel">
+  <h2>📋 Inventario actual</h2>
+  <table>
+    <thead>
+      <tr><th>SKU</th><th>Producto</th><th>Categoría</th><th>Precio</th><th>Stock</th></tr>
+    </thead>
+    <tbody id="tablaBody">
+      <tr><td colspan="5" style="text-align:center;padding:20px;color:#888">Cargando...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const PELIGROSO = /[<>"';%()&+\\]/;
+
+  function mostrarAlerta(idAlerta, tipo, msg) {
+    const el = document.getElementById(idAlerta);
+    el.className = `alert ${tipo}`;
+    el.textContent = msg;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 5000);
+  }
+
+  function mostrarError(id, mostrar) {
+    document.getElementById(id).style.display = mostrar ? 'block' : 'none';
+  }
+
+  // Verificar sesión activa
+  fetch('/api/sesion')
+    .then(r => r.json())
+    .then(d => {
+      if (!d.ok) { window.location.href = '/'; return; }
+      document.getElementById('badgeUsuario').textContent = `${d.usuario.nombre} (${d.usuario.rol})`;
+    })
+    .catch(() => window.location.href = '/');
+
+  function cerrarSesion() {
+    fetch('/api/logout', { method: 'POST' })
+      .then(() => window.location.href = '/');
+  }
+
+  // Cargar tabla y select de productos
+  function cargarProductos() {
+    fetch('/api/productos')
+      .then(r => {
+        if (r.status === 401) { window.location.href = '/'; return null; }
+        return r.json();
+      })
+      .then(data => {
+        if (!data) return;
+        const body  = document.getElementById('tablaBody');
+        const sel   = document.getElementById('mov-producto');
+        body.innerHTML = '';
+        sel.innerHTML  = '<option value="">— Selecciona un producto —</option>';
+
+        if (data.length === 0) {
+          body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#888">Sin productos registrados.</td></tr>';
+          return;
+        }
+        data.forEach(p => {
+          const stockClass = p.stock < (p.stock_minimo || 5) ? 'stock-low' : 'stock-ok';
+          body.innerHTML += `<tr>
+            <td>${p.sku}</td>
+            <td>${p.nombre}</td>
+            <td>${p.categoria}</td>
+            <td>S/ ${parseFloat(p.precio).toFixed(2)}</td>
+            <td class="${stockClass}">${p.stock}</td>
+          </tr>`;
+          sel.innerHTML += `<option value="${p.id}">[${p.sku}] ${p.nombre} (stock: ${p.stock})</option>`;
+        });
+      });
+  }
+
+  cargarProductos();
+
+  // ── Validación y envío: Nuevo Producto ──────────────────────────────────────
+  document.getElementById('formProducto').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let valido = true;
+
+    const sku       = document.getElementById('sku').value.trim();
+    const nombre    = document.getElementById('prod-nombre').value.trim();
+    const categoria = document.getElementById('prod-categoria').value.trim();
+    const precio    = document.getElementById('prod-precio').value.trim();
+    const stock     = document.getElementById('prod-stock').value.trim();
+
+    // Validaciones cliente
+    if (!sku || PELIGROSO.test(sku))          { mostrarError('err-sku', true);       valido = false; } else mostrarError('err-sku', false);
+    if (!nombre || PELIGROSO.test(nombre))    { mostrarError('err-nombre', true);    valido = false; } else mostrarError('err-nombre', false);
+    if (!categoria || PELIGROSO.test(categoria)){ mostrarError('err-categoria', true); valido = false; } else mostrarError('err-categoria', false);
+    if (!precio || isNaN(parseFloat(precio)) || parseFloat(precio) < 0) { mostrarError('err-precio', true); valido = false; } else mostrarError('err-precio', false);
+    if (!stock  || !/^\d+$/.test(stock) || parseInt(stock) < 0)        { mostrarError('err-stock', true);  valido = false; } else mostrarError('err-stock', false);
+
+    if (!valido) return;
+
+    const btn = document.getElementById('btnProd');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Guardando...';
+
+    try {
+      const resp = await fetch('/api/productos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sku, nombre, categoria, precio: parseFloat(precio), stock: parseInt(stock) }),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        mostrarAlerta('alertaProd', 'success', 'Producto registrado correctamente.');
+        document.getElementById('formProducto').reset();
+        cargarProductos();
+      } else {
+        mostrarAlerta('alertaProd', 'error', data.mensaje || 'Error en el sistema.');
+      }
+    } catch {
+      mostrarAlerta('alertaProd', 'error', 'Error de conexión. Inténtelo de nuevo.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Registrar producto';
+    }
+  });
+
+  // ── Validación y envío: Movimiento ──────────────────────────────────────────
+  document.getElementById('formMov').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    let valido = true;
+
+    const producto_id = document.getElementById('mov-producto').value;
+    const tipo        = document.getElementById('mov-tipo').value;
+    const cantidad    = document.getElementById('mov-cantidad').value.trim();
+
+    if (!producto_id) { mostrarError('err-mov-prod', true); valido = false; } else mostrarError('err-mov-prod', false);
+    if (!tipo)        { mostrarError('err-mov-tipo', true); valido = false; } else mostrarError('err-mov-tipo', false);
+    if (!cantidad || !/^\d+$/.test(cantidad) || parseInt(cantidad) <= 0) {
+      mostrarError('err-mov-cant', true); valido = false;
+    } else mostrarError('err-mov-cant', false);
+
+    if (!valido) return;
+
+    const btn = document.getElementById('btnMov');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Guardando...';
+
+    try {
+      const resp = await fetch('/api/movimientos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ producto_id, tipo, cantidad: parseInt(cantidad) }),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        mostrarAlerta('alertaMov', 'success', `Movimiento registrado. Nuevo stock: ${data.nuevoStock}`);
+        document.getElementById('formMov').reset();
+        cargarProductos();
+      } else {
+        mostrarAlerta('alertaMov', 'error', data.mensaje || 'Error en el sistema.');
+      }
+    } catch {
+      mostrarAlerta('alertaMov', 'error', 'Error de conexión. Inténtelo de nuevo.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Registrar movimiento';
+    }
+  });
+</script>
+
 </body>
 </html>
