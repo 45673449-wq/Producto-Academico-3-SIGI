@@ -4,10 +4,14 @@ const bcrypt = require('bcrypt');
 const hashAdmin = bcrypt.hashSync('admin123', 10);
 
 try {
-  // 1. Crear usuarios
-  const insertUser = db.prepare('INSERT OR IGNORE INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)');
-  insertUser.run('Eneas Rivas', 'Eneas.Rivas@sigi.edu.pe', hashAdmin, 'admin');
-  insertUser.run('Admin', 'admin@sigi.edu.pe', hashAdmin, 'admin');
+  // 1. Crear/actualizar usuarios — siempre garantiza que la contraseña sea correcta
+  const upsert = db.prepare(`
+    INSERT INTO usuarios (nombre, email, password, rol)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(email) DO UPDATE SET password = excluded.password, nombre = excluded.nombre, rol = excluded.rol
+  `);
+  upsert.run('Eneas Rivas', 'Eneas.Rivas@sigi.edu.pe', hashAdmin, 'admin');
+  upsert.run('Administrador', 'admin@sigi.edu.pe', hashAdmin, 'admin');
   console.log("✅ Usuario Admin listo.");
 
   // 2. Crear los productos del PDF

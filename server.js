@@ -78,7 +78,7 @@ app.post('/api/login', (req, res, next) => {
     }
 
     const stmt = db.prepare('SELECT id, nombre, email, rol, password FROM usuarios WHERE email = ?');
-    const usuario = stmt.get(email.toLowerCase());
+    const usuario = stmt.get(email);
 
     if (!usuario || !bcrypt.compareSync(password, usuario.password)) {
       return res.status(401).json({ ok: false, mensaje: 'Credenciales incorrectas.' });
